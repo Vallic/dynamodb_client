@@ -1,0 +1,11 @@
+{
+    "name": "drupal/dynamodb_client",
+    "type": "drupal-module",
+    "description": "Client interface use for communication with Amazon DynamoDB",
+    "homepage": "http://drupal.org/project/dynamodb_client",
+    "license": "GPL-2.0+",
+    "minimum-stability": "dev",
+    "require": {
+        "aws/aws-sdk-php": "^3"
+    }
+}

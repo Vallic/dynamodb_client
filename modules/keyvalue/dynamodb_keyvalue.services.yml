@@ -1,0 +1,13 @@
+services:
+  keyvalue.dynamodb:
+    class: Drupal\dynamodb_keyvalue\KeyValueStore\KeyValueDynamoDbFactory
+    arguments: ['@serialization.phpserialize', '@dynamodb_client.connection']
+
+  keyvalue.expirable.dynamodb:
+    class: Drupal\dynamodb_keyvalue\KeyValueStore\KeyValueDynamoDbExpirableFactory
+    arguments: [ '@serialization.phpserialize', '@dynamodb_client.connection']
+
+  dynamodb_keyvalue.migrate:
+    class: Drupal\dynamodb_keyvalue\MigrateDatabaseKeyValue
+    arguments:
+      [ '@database', '@serialization.yaml', '@dynamodb_client.connection' ]

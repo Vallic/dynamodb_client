@@ -1,0 +1,109 @@
+<?php
+
+use Drupal\dynamodb_client\DynamoDb;
+
+/**
+ * Implements hook_install().
+ */
+function dynamodb_keyvalue_install() {
+  $connection = DynamoDb::connection();
+  foreach (dynamodb_keyvalue_tables_definition() as $id => $table) {
+    $billing = DynamoDb::getBillingMode($id);
+    $table += $billing;
+    $connection->createTable($table);
+  }
+
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function dynamodb_keyvalue_uninstall() {
+  $connection = DynamoDb::connection();
+  $connection->deleteTable(['TableName' => 'key_value']);
+  $connection->deleteTable(['TableName' => 'key_value_expire']);
+}
+
+/**
+ * Definition for tables.
+ *
+ * @return array[]
+ *   Return keyed array of tables.
+ */
+function dynamodb_keyvalue_tables_definition() {
+  return [
+   'key_value' => [
+     'TableName' => 'key_value',
+     'AttributeDefinitions' => [
+       [
+         'AttributeName' => 'collection',
+         'AttributeType' => 'S'
+       ],
+       [
+         'AttributeName' => 'name',
+         'AttributeType' => 'S'
+       ],
+     ],
+     'KeySchema' => [
+       [
+         'AttributeName' => 'collection',
+         'KeyType' => 'HASH'  //Partition key
+       ],
+       [
+         'AttributeName' => 'name',
+         'KeyType' => 'RANGE'  //Sort key
+       ],
+     ],
+   ],
+   'key_value_expire' => [
+     'TableName' => 'key_value_expire',
+     'AttributeDefinitions' => [
+       [
+         'AttributeName' => 'collection',
+         'AttributeType' => 'S',
+       ],
+       [
+         'AttributeName' => 'name',
+         'AttributeType' => 'S',
+       ],
+       [
+         'AttributeName' => 'expire',
+         'AttributeType' => 'N',
+       ],
+     ],
+     'LocalSecondaryIndexes' => [
+       [
+         'IndexName' => 'expired_index',
+         'KeySchema' => [
+           [
+             'AttributeName' => 'collection',
+             'KeyType' => 'HASH'
+           ],
+           [
+             'AttributeName' => 'expire',
+             'KeyType' => 'RANGE'
+           ],
+         ],
+         'Projection' => [
+           'ProjectionType' => 'INCLUDE',
+           'NonKeyAttributes' => ['name']
+         ]
+       ],
+     ],
+     'KeySchema' => [
+       [
+         'AttributeName' => 'collection',
+         'KeyType' => 'HASH'
+       ],
+       [
+         'AttributeName' => 'name',
+         'KeyType' => 'RANGE'
+       ],
+     ],
+     'TimeToLiveSpecification' => [
+       'Enabled' => TRUE,
+       'AttributeName' => 'expire',
+     ],
+   ]
+  ];
+}

@@ -1,0 +1,8 @@
+services:
+  dynamodb_client.client_factory:
+    class: Drupal\dynamodb_client\ClientFactory
+    arguments: [ default ]
+
+  dynamodb_client.connection:
+    class: Drupal\dynamodb_client\Connection
+    arguments: ['@settings']
