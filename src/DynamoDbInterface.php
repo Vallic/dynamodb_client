@@ -162,4 +162,12 @@ interface DynamoDbInterface {
    */
   public function listTables(array $params);
 
+  /**
+   * Get direct DynamoDB connection client.
+   *
+   * @return \Aws\DynamoDb\DynamoDbClient
+   *   Return DynamoDB client.
+   */
+  public function getClient();
+
 }

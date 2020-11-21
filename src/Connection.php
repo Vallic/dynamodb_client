@@ -261,4 +261,11 @@ class Connection implements DynamoDbInterface {
     return $response['TableNames'] ?? [];
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function getClient() {
+    return $this->clientFactory->connect();
+  }
+
 }
