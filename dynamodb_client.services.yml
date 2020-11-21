@@ -5,4 +5,4 @@ services:
 
   dynamodb_client.connection:
     class: Drupal\dynamodb_client\Connection
-    arguments: ['@settings']
+    arguments: ['@dynamodb_client.client_factory']
