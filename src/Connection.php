@@ -3,8 +3,6 @@
 namespace Drupal\dynamodb_client;
 
 use Aws\DynamoDb\Exception\DynamoDbException;
-use Drupal\Core\Logger\LoggerChannelTrait;
-use Drupal\Core\Site\Settings;
 
 /**
  * Logic for executing most common DynamoDB actions within Drupal context.
@@ -12,8 +10,6 @@ use Drupal\Core\Site\Settings;
  * @package Drupal\dynamodb_client
  */
 class Connection implements DynamoDbInterface {
-
-  use LoggerChannelTrait;
 
   /**
    * The DynamoDB client factory.
@@ -30,9 +26,11 @@ class Connection implements DynamoDbInterface {
   protected $dynamoDb;
 
   /**
-   * @var \Psr\Log\LoggerInterface
+   * The logger channel service.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
    */
-  protected $logger;
+  protected $loggerFactory;
 
   /**
    * DrupalDynamoDb constructor.
@@ -42,7 +40,6 @@ class Connection implements DynamoDbInterface {
   public function __construct($clientFactory) {
     $this->clientFactory = $clientFactory;
     $this->dynamoDb = $clientFactory->connect();
-    $this->logger = $this->getLogger('dynamodb_client');
   }
 
   /**
@@ -70,7 +67,7 @@ class Connection implements DynamoDbInterface {
         }
 
       } catch (DynamoDbException $e) {
-        $this->logger->error($e);
+        $this->logger()->error($e);
       }
 
       // If there is LastEvaluatedKey in the response and initial parameters
@@ -106,7 +103,7 @@ class Connection implements DynamoDbInterface {
         }
 
       } catch (DynamoDbException $e) {
-        $this->logger->error($e);
+        $this->logger()->error($e);
       }
 
       // If there is LastEvaluatedKey in the response and initial parameters
@@ -125,7 +122,7 @@ class Connection implements DynamoDbInterface {
       $result = $this->dynamoDb->getItem($params);
 
     } catch (DynamoDbException $e) {
-      $this->logger->error($e);
+      $this->logger()->error($e);
     }
     return $result['Item'] ?? [];
   }
@@ -137,7 +134,7 @@ class Connection implements DynamoDbInterface {
     try {
       $result = $this->dynamoDb->putItem($params);
     } catch (DynamoDbException $e) {
-      $this->logger->error($e);
+      $this->logger()->error($e);
     }
     return isset($result['@metadata']);
   }
@@ -149,7 +146,7 @@ class Connection implements DynamoDbInterface {
     try {
       $result = $this->dynamoDb->updateItem($params);
     } catch (DynamoDbException $e) {
-      $this->logger->error($e);
+      $this->logger()->error($e);
     }
     return $result['Attributes'] ?? [];
   }
@@ -161,7 +158,7 @@ class Connection implements DynamoDbInterface {
     try {
       $result = $this->dynamoDb->deleteItem($params);
     } catch (DynamoDbException $e) {
-      $this->logger->error($e);
+      $this->logger()->error($e);
     }
     return $result['Attributes'] ?? [];
   }
@@ -173,7 +170,7 @@ class Connection implements DynamoDbInterface {
     try {
       $result = $this->dynamoDb->batchWriteItem($params);
     } catch (DynamoDbException $e) {
-      $this->logger->error($e);
+      $this->logger()->error($e);
     }
     return isset($result['@metadata']);
   }
@@ -185,7 +182,7 @@ class Connection implements DynamoDbInterface {
     try {
       $results = $this->dynamoDb->batchGetItem($params);
     } catch (DynamoDbException $e) {
-      $this->logger->error($e);
+      $this->logger()->error($e);
     }
     return $results['Responses'] ?? [];
   }
@@ -210,7 +207,7 @@ class Connection implements DynamoDbInterface {
       ]);
 
     } catch (DynamoDbException $e) {
-      $this->logger->error($e);
+      $this->logger()->error($e);
       return FALSE;
     }
     return TRUE;
@@ -223,7 +220,7 @@ class Connection implements DynamoDbInterface {
     try {
       $this->dynamoDb->updateTable($params);
     } catch (DynamoDbException $e) {
-      $this->logger->error($e);
+      $this->logger()->error($e);
       return FALSE;
     }
     return TRUE;
@@ -243,7 +240,7 @@ class Connection implements DynamoDbInterface {
         ]
       ]);
     } catch (DynamoDbException $e) {
-      $this->logger->error($e);
+      $this->logger()->error($e);
       return FALSE;
     }
     return TRUE;
@@ -256,7 +253,7 @@ class Connection implements DynamoDbInterface {
     try {
       $this->dynamoDb->listTables($params);
     } catch (DynamoDbException $e) {
-      $this->logger->error($e);
+      $this->logger()->error($e);
     }
     return $response['TableNames'] ?? [];
   }
@@ -266,6 +263,16 @@ class Connection implements DynamoDbInterface {
    */
   public function getClient() {
     return $this->clientFactory->connect();
+  }
+
+  /**
+   * @return \Drupal\Core\Logger\LoggerChannelInterface
+   */
+  protected function logger() {
+    if (!$this->loggerFactory) {
+      $this->loggerFactory = \Drupal::service('logger.factory')->get('dynamodb_client');
+    }
+    return $this->loggerFactory;
   }
 
 }
