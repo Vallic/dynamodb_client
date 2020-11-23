@@ -3,6 +3,7 @@
 namespace Drupal\dynamodb_keyvalue\KeyValueStore;
 
 use Aws\DynamoDb\Marshaler;
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\Serialization\SerializationInterface;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
 use Drupal\dynamodb_client\Connection;
@@ -34,6 +35,13 @@ class KeyValueDynamoDbExpirableFactory implements KeyValueExpirableFactoryInterf
   protected $marshaler;
 
   /**
+   * The current time.
+   *
+   * @var \Drupal\Component\Datetime\TimeInterface
+   */
+  protected $time;
+
+  /**
    * Holds references to each instantiation so they can be terminated.
    *
    * @var \Drupal\dynamodb_keyvalue\KeyValueStore\DynamoDbStorageExpirable[]
@@ -47,11 +55,14 @@ class KeyValueDynamoDbExpirableFactory implements KeyValueExpirableFactoryInterf
    *   The serialization class to use.
    * @param \Drupal\dynamodb_client\Connection $dynamodb
    *   The DynamoDB connection object containing the key-value tables.
+   * @param \Drupal\Component\Datetime\TimeInterface $time
+   *   The current time.
    */
-  public function __construct(SerializationInterface $serializer, Connection $dynamodb) {
+  public function __construct(SerializationInterface $serializer, Connection $dynamodb, TimeInterface $time) {
     $this->serializer = $serializer;
     $this->dynamodb = $dynamodb;
     $this->marshaler = new Marshaler();
+    $this->time = $time;
   }
 
   /**
@@ -59,7 +70,7 @@ class KeyValueDynamoDbExpirableFactory implements KeyValueExpirableFactoryInterf
    */
   public function get($collection) {
     if (!isset($this->storages[$collection])) {
-      $this->storages[$collection] = new DynamoDbStorageExpirable($collection, $this->serializer, $this->dynamodb, $this->marshaler);
+      $this->storages[$collection] = new DynamoDbStorageExpirable($collection, $this->serializer, $this->dynamodb, $this->marshaler, $this->time);
     }
     return $this->storages[$collection];
   }

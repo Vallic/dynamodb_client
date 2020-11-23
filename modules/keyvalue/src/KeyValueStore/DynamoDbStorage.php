@@ -144,7 +144,9 @@ class DynamoDbStorage extends StorageBase {
     }
     else {
       $key = end($keys);
-      $values[$key] = $this->get($key);
+      if ($value = $this->get($key)) {
+        $values[$key] = $value;
+      }
     }
 
     return $values;

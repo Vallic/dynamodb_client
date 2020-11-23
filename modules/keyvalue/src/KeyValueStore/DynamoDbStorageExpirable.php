@@ -3,6 +3,7 @@
 namespace Drupal\dynamodb_keyvalue\KeyValueStore;
 
 use Aws\DynamoDb\Marshaler;
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\Serialization\SerializationInterface;
 use Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface;
 use Drupal\dynamodb_client\Connection;
@@ -14,10 +15,17 @@ use Drupal\dynamodb_client\DynamoDb;
 class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreExpirableInterface {
 
   /**
+   * The current time.
+   * @var \Drupal\Component\Datetime\TimeInterface|string
+   */
+  protected $time;
+
+  /**
    * {@inheritdoc}
    */
-  public function __construct($collection, SerializationInterface $serializer, Connection $dynamodb, Marshaler $marshaler, $table = 'key_value_expire') {
+  public function __construct($collection, SerializationInterface $serializer, Connection $dynamodb, Marshaler $marshaler, TimeInterface $time, $table = 'key_value_expire') {
     parent::__construct($collection, $serializer, $dynamodb, $marshaler, $table);
+    $this->time = $time;
   }
 
   /**
@@ -37,7 +45,7 @@ class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreE
       'ExpressionAttributeValues' => [
         ':col' => ['S' => $this->collection],
         ':na' => ['S' => $key],
-        ':exp' => ['N' => time()],
+        ':exp' => ['N' => $this->time->getRequestTime()],
       ],
       'ExpressionAttributeNames' => [
         "#co" => "collection",
@@ -79,7 +87,9 @@ class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreE
     // Make basic single get request.
 
     foreach ($keys as $key) {
-      $values[$key] = $this->get($key);
+      if ($value = $this->get($key)) {
+        $values[$key] = $value;
+      }
     }
 
     return $values;
@@ -95,7 +105,7 @@ class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreE
       'KeyConditionExpression' => '#co = :col AND expire > :exp',
       'ExpressionAttributeValues' => [
         ':col' => ['S' => $this->collection],
-        ':exp' => ['N' => time()],
+        ':exp' => ['N' => $this->time->getRequestTime()],
       ],
       'ExpressionAttributeNames' => [
         "#co" => "collection",
@@ -132,7 +142,7 @@ class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreE
         'collection' => ['S' => $this->collection],
         'name' => ['S' => $key],
         'value' => ['S' => $this->serializer->encode($value)],
-        'expire' => ['N' => time() + $expire],
+        'expire' => ['N' => $this->time->getRequestTime() + $expire],
       ],
     ];
 
@@ -159,7 +169,7 @@ class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreE
         'collection' => ['S' => $this->collection],
         'name' => ['S' => $key],
         'value' => ['S' => $this->serializer->encode($value)],
-        'expire'=> ['N' => time() + $expire]
+        'expire'=> ['N' => $this->time->getRequestTime() + $expire]
       ],
       'ExpressionAttributeNames' => [
         '#vl' => 'value',
@@ -185,7 +195,7 @@ class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreE
               'collection' => ['S' => $this->collection],
               'name' => ['S' => $key],
               'value' => ['S' => $this->serializer->encode($value)],
-              'expire' => ['N' => time() + $expire]
+              'expire' => ['N' => $this->time->getRequestTime() + $expire]
             ],
           ],
         ];

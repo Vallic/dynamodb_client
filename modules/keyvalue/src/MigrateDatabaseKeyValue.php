@@ -2,7 +2,6 @@
 
 namespace Drupal\dynamodb_keyvalue;
 
-use Drupal\Component\Serialization\SerializationInterface;
 use Drupal\Core\Database\Connection;
 use \Drupal\dynamodb_client\Connection as DynamoDB;
 
@@ -28,25 +27,15 @@ class MigrateDatabaseKeyValue {
   protected $dynamodb;
 
   /**
-   * The serialization class to use.
-   *
-   * @var \Drupal\Component\Serialization\SerializationInterface
-   */
-  protected $serializer;
-
-  /**
    * MigrateDatabaseKeyValue constructor.
    *
    * @param \Drupal\Core\Database\Connection $database
    *   The database connection
-   * @param \Drupal\Component\Serialization\SerializationInterface $serializer
-   *   The serialization class to use.
    * @param \Drupal\dynamodb_client\Connection $dynamodb
    *   The dynamodb connection.
    */
-  public function __construct(Connection $database, SerializationInterface $serializer, DynamoDB $dynamodb) {
+  public function __construct(Connection $database, DynamoDB $dynamodb) {
     $this->database = $database;
-    $this->serializer = $serializer;
     $this->dynamodb = $dynamodb;
   }
 
@@ -75,7 +64,7 @@ class MigrateDatabaseKeyValue {
         $item = [
           'collection' => ['S' => $set->collection],
           'name' => ['S' => $set->name],
-          'value' => ['S' => $this->serializer->encode($set->value)]
+          'value' => ['S' => $set->value]
         ];
 
         if ($type === 'key_value_expire') {
