@@ -1,7 +1,7 @@
 DynamoDB
 -----
 The Drupal DynamoDB module provides integration with AWS DynamoDB services.
-Current integration provides basic database wrapper for use with DynamoDB.
+Current integration provides a basic database wrapper for use with DynamoDB.
 
 # Features
 * DynamoDB table CRUD operations: create, delete, update and list tables
@@ -82,7 +82,7 @@ from DynamoDb. See more details below.
 
 **Important**
 Whilst needs of different projects could be different, for that reason billing
-and read consistency can be defined trough settings per an
+and read consistency can be defined through settings per an
 instance or per each table. As well, read consistency can be set inside each
 query which you perform if you choose to add `ConsistencyRead => TRUE`
 inside your query.
@@ -91,10 +91,10 @@ inside your query.
 
 ### Initialize connection - default instance
 ```
-# Drupal core Mysql.
+# Drupal core MySQL.
 Drupal::database();
 
-# DynamoDB - access to DynamoDB trough Drupal wrapper.
+# DynamoDB - access to DynamoDB through Drupal wrapper.
 DynamoDb::database();
 
 # DynamoDB - access directly to DynamoDB, without Drupal wrapper.
@@ -103,7 +103,7 @@ DynamoDb::rawDatabase();
 
 ### Initialize connection - different instance
 ```
-# Drupal core Mysql.
+# Drupal core MySQL.
 Drupal::database('mysql_replica');
 
 # DynamoDB
