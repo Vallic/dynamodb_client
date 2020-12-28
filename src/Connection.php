@@ -3,6 +3,7 @@
 namespace Drupal\dynamodb_client;
 
 use Aws\DynamoDb\Exception\DynamoDbException;
+use Drupal\Core\Site\Settings;
 
 /**
  * Logic for executing most common DynamoDB actions within Drupal context.
@@ -26,11 +27,25 @@ class Connection implements DynamoDbInterface {
   protected $dynamoDb;
 
   /**
+   * Drupal DynamoDB instance key.
+   *
+   * @var string
+   */
+  protected $instanceId;
+
+  /**
    * The logger channel service.
    *
    * @var \Drupal\Core\Logger\LoggerChannelInterface
    */
   protected $loggerFactory;
+
+  /**
+   * Static cache for consistent read option.
+   *
+   * @var []
+   */
+  protected $consistentRead;
 
   /**
    * DrupalDynamoDb constructor.
@@ -40,6 +55,7 @@ class Connection implements DynamoDbInterface {
   public function __construct($clientFactory) {
     $this->clientFactory = $clientFactory;
     $this->dynamoDb = $clientFactory->connect();
+    $this->instanceId = $clientFactory->getInstanceId();
   }
 
   /**
@@ -48,6 +64,12 @@ class Connection implements DynamoDbInterface {
   public function query(array $params) {
     $output = [];
     $limit = isset($params['limit']);
+
+    // Get consistent read settings.
+    if (!isset($params['ConsistentRead'])) {
+      $params['ConsistentRead'] = $this->isConsistentRead($params['TableName']);
+    }
+
     do {
       try {
 
@@ -84,6 +106,12 @@ class Connection implements DynamoDbInterface {
   public function scan(array $params) {
     $output = [];
     $limit = isset($params['limit']);
+
+    // Get consistent read settings.
+    if (!isset($params['ConsistentRead'])) {
+      $params['ConsistentRead'] = $this->isConsistentRead($params['TableName']);
+    }
+
     do {
       try {
 
@@ -118,6 +146,11 @@ class Connection implements DynamoDbInterface {
    * {@inheritdoc}
    */
   public function getItem(array $params) {
+    // Get consistent read settings.
+    if (!isset($params['ConsistentRead'])) {
+      $params['ConsistentRead'] = $this->isConsistentRead($params['TableName']);
+    }
+
     try {
       $result = $this->dynamoDb->getItem($params);
 
@@ -179,6 +212,10 @@ class Connection implements DynamoDbInterface {
    * {@inheritdoc}
    */
   public function batchGetItem(array $params) {
+    // Get consistent read settings.
+    if (!isset($params['ConsistentRead'])) {
+      $params['ConsistentRead'] = $this->isConsistentRead($params['TableName']);
+    }
     try {
       $results = $this->dynamoDb->batchGetItem($params);
     } catch (DynamoDbException $e) {
@@ -191,9 +228,10 @@ class Connection implements DynamoDbInterface {
    * {@inheritdoc}
    */
   public function createTable(array $params) {
-    // If there is nothing specified on params, use global.
+    // If there is nothing specified on params, use global defined
+    // billing settings.
     if (!isset($params['ProvisionedThroughput'], $params['BillingMode'])) {
-      $params += DynamoDb::getBillingMode($params['TableName']);
+      $params += $this->getBillingMode($params['TableName']);
     }
 
     try {
@@ -266,6 +304,49 @@ class Connection implements DynamoDbInterface {
   }
 
   /**
+   * Get settings for consistent read, either per table or instance.
+   *
+   * @param string $table
+   *   DynamoDB table name.
+   *
+   * @return bool
+   *   Return true or false.
+   */
+  protected function isConsistentRead($table) {
+    // Reuse for same table and instance - useful for key_value, etc..
+    if (!isset($this->consistentRead[$this->instanceId])) {
+      $settings = Settings::get('dynamodb_client');
+      $this->consistentRead[$this->instanceId] = [
+        'default' => $settings[$this->instanceId]['consistent_read'] ?? FALSE,
+        'table_settings' => $settings[$this->instanceId]['table_settings'] ?? [],
+      ];
+    }
+
+    return $this->consistentRead[$this->instanceId]['table'][$table]['consistent_read'] ?? $this->consistentRead[$this->instanceId]['default'];
+  }
+
+  /**
+   * Retrieve billing mode per instance or table.
+   *
+   * @param string $table
+   *   Table name.
+   *
+   * @return array
+   *   Return billing data.
+   */
+  protected function getBillingMode($table) {
+    $settings = Settings::get('dynamodb_client');
+
+    if (!isset($settings[$this->instanceId]['aws_billing'])) {
+      throw new \RuntimeException('Missing default billing settings');
+    }
+
+    return $settings[$this->instanceId]['table_settings'][$table]['aws_billing'] ?? $settings[$this->instanceId]['aws_billing'];
+  }
+
+  /**
+   * Initialize dynamically logger service upon failure of DynamoDB query.
+   *
    * @return \Drupal\Core\Logger\LoggerChannelInterface
    */
   protected function logger() {

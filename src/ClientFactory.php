@@ -79,4 +79,14 @@ class ClientFactory {
     return $this->client[$this->alias];
   }
 
+  /**
+   * Return initialized Drupal instance alias.
+   *
+   * @return string
+   *   Return Drupal instance name string.
+   */
+  public function getInstanceId() {
+    return $this->alias;
+  }
+
 }

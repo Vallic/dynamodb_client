@@ -6,20 +6,21 @@ use Drupal\dynamodb_client\DynamoDb;
  * Implements hook_install().
  */
 function dynamodb_keyvalue_install() {
-  $connection = DynamoDb::connection();
-  foreach (dynamodb_keyvalue_tables_definition() as $id => $table) {
-    $billing = DynamoDb::getBillingMode($id);
-    $table += $billing;
+  $connection = DynamoDb::database();
+  foreach (dynamodb_keyvalue_tables_definition() as $id => $table) {;
     $connection->createTable($table);
   }
 
+  // Migrate existing data.
+  \Drupal::service('dynamodb_keyvalue.migrate')->run('key_value');
+  \Drupal::service('dynamodb_keyvalue.migrate')->run('key_value_expire');
 }
 
 /**
  * Implements hook_uninstall().
  */
 function dynamodb_keyvalue_uninstall() {
-  $connection = DynamoDb::connection();
+  $connection = DynamoDb::database();
   $connection->deleteTable(['TableName' => 'key_value']);
   $connection->deleteTable(['TableName' => 'key_value_expire']);
 }

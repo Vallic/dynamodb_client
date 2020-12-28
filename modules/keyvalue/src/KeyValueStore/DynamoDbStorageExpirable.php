@@ -54,7 +54,6 @@ class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreE
       ],
       'Limit' => 1,
       'ProjectionExpression' => '#vl',
-      'ConsistentRead' => TRUE,
       'FilterExpression' => 'expire > :exp'
     ];
 
@@ -113,7 +112,6 @@ class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreE
         '#nm' => 'name',
       ],
       'ProjectionExpression' => '#vl, #nm',
-      'ConsistentRead' => TRUE,
     ];
 
     // DynamoDB have limit of 1MB of data per query.

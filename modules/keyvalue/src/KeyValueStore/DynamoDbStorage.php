@@ -88,7 +88,6 @@ class DynamoDbStorage extends StorageBase {
         ],
       ],
       'ProjectionExpression' => '#val',
-      'ConsistentRead' => TRUE,
       'ExpressionAttributeNames' => [
         '#val' => 'value',
       ],
@@ -128,7 +127,6 @@ class DynamoDbStorage extends StorageBase {
         $params = [
           'RequestItems' => [
             $this->table => $data,
-            'ConsistentRead' => TRUE,
           ],
         ];
 
@@ -168,7 +166,6 @@ class DynamoDbStorage extends StorageBase {
         '#nm' => 'name',
       ],
       'ProjectionExpression' => '#vl, #nm',
-      'ConsistentRead' => TRUE,
     ];
 
     // DynamoDB have limit of 1MB of data per query.

@@ -2,8 +2,6 @@
 
 namespace Drupal\dynamodb_client;
 
-use Drupal\Core\Site\Settings;
-
 /**
  * Main definition for establishing connection.
  *
@@ -48,7 +46,7 @@ final class DynamoDb {
    * @return \Drupal\dynamodb_client\Connection
    *   Returns Drupal DynamoDB connection
    */
-  public static function connection($alias = self::DYNAMO_DB_DEFAULT) {
+  public static function database($alias = self::DYNAMO_DB_DEFAULT) {
     if (!isset(self::$connections[$alias])) {
       self::$connections[$alias] = new Connection(new ClientFactory($alias));
     }
@@ -65,35 +63,13 @@ final class DynamoDb {
    * @return \Aws\DynamoDb\DynamoDbClient|null
    *   Returns AWS DynamoDB connection
    */
-  public static function rawConnection($alias = self::DYNAMO_DB_DEFAULT) {
+  public static function rawDatabase($alias = self::DYNAMO_DB_DEFAULT) {
     if (!isset(self::$rawConnections[$alias])) {
       $client_factory = new ClientFactory($alias);
       self::$rawConnections[$alias] = $client_factory->connect();
     }
 
     return self::$rawConnections[$alias];
-  }
-
-  /**
-   * Get billing mode from settings.
-   *
-   * @param string $table
-   *   Table name or default settings.
-   * @return array|mixed
-   *   Return settings.
-   */
-  public static function getBillingMode($table = 'default') {
-    $settings = Settings::get('dynamodb_aws_billing');
-
-    if (!isset($settings['default'])) {
-      throw new \RuntimeException('Missing default billing settings');
-    }
-
-    if (!$table) {
-      return $settings['default'] ?? [];
-    }
-
-    return $settings[$table] ?? $settings['default'];
   }
 
 }
