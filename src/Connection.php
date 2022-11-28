@@ -63,7 +63,7 @@ class Connection implements DynamoDbInterface {
    */
   public function query(array $params) {
     $output = [];
-    $limit = isset($params['limit']);
+    $limit = isset($params['Limit']);
 
     // Get consistent read settings.
     if (!isset($params['ConsistentRead'])) {
@@ -105,7 +105,7 @@ class Connection implements DynamoDbInterface {
    */
   public function scan(array $params) {
     $output = [];
-    $limit = isset($params['limit']);
+    $limit = isset($params['Limit']);
 
     // Get consistent read settings.
     if (!isset($params['ConsistentRead'])) {
