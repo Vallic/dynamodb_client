@@ -1,5 +1,5 @@
 name: 'Amazon DynamoDB'
 type: module
 description: 'Client interface for Amazon DynamoDB'
-core_version_requirement: ^8.9 || ^9
+core_version_requirement: ^8.9 || ^9 || ^10
 package: Performance

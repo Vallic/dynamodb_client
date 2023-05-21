@@ -3,7 +3,7 @@
 namespace Drupal\dynamodb_keyvalue;
 
 use Drupal\Core\Database\Connection;
-use \Drupal\dynamodb_client\Connection as DynamoDB;
+use Drupal\dynamodb_client\Connection as DynamoDB;
 
 /**
  * Migrates key/value entries from DB to DynamoDB.
@@ -17,20 +17,20 @@ class MigrateDatabaseKeyValue {
    *
    * @var \Drupal\Core\Database\Connection
    */
-  protected $database;
+  protected Connection $database;
 
   /**
    * The dynamodb connection.
    *
    * @var \Drupal\dynamodb_client\Connection
    */
-  protected $dynamodb;
+  protected DynamoDB $dynamodb;
 
   /**
    * MigrateDatabaseKeyValue constructor.
    *
    * @param \Drupal\Core\Database\Connection $database
-   *   The database connection
+   *   The database connection.
    * @param \Drupal\dynamodb_client\Connection $dynamodb
    *   The dynamodb connection.
    */
@@ -42,10 +42,10 @@ class MigrateDatabaseKeyValue {
   /**
    * Migrate data from database to external destination.
    *
-   * @param $type
+   * @param string $type
    *   Type of key value storage, regular or expire.
    */
-  public function run($type) {
+  public function run(string $type): void {
 
     // Basic sanity checks.
     if (!in_array($type, ['key_value', 'key_value_expire'])) {
@@ -64,23 +64,22 @@ class MigrateDatabaseKeyValue {
         $item = [
           'collection' => ['S' => $set->collection],
           'name' => ['S' => $set->name],
-          'value' => ['S' => $set->value]
+          'value' => ['S' => $set->value],
         ];
 
         if ($type === 'key_value_expire') {
           $item['expire'] = ['N' => $set->expire];
         }
 
-        $items [] =  [
-          'PutRequest' => [
-            'Item' => $item]
+        $items[] = [
+          'PutRequest' => ['Item' => $item],
         ];
       }
 
       $params = [
         'RequestItems' => [
           $type => $items,
-        ]
+        ],
       ];
 
       $this->dynamodb->batchWriteItem($params);

@@ -9,7 +9,7 @@ use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\Site\Settings;
 
 /**
- * Class ClientFactory.
+ * DynamoDB client factory.
  */
 class ClientFactory {
 
@@ -19,12 +19,14 @@ class ClientFactory {
    * @var string[]
    *   Array of site settings.
    */
-  protected $settings;
+  protected array $settings;
 
   /**
+   * The dynamodb alias.
+   *
    * @var string
    */
-  protected $alias;
+  protected string $alias;
 
   /**
    * The DynamoDB client.
@@ -32,14 +34,15 @@ class ClientFactory {
    * @var \Aws\DynamoDb\DynamoDbClient
    *   The DynamoDb client instance.
    */
-  protected $client;
+  protected DynamoDbClient $client;
 
   /**
    * Constructor.
    *
    * @param string $alias
+   *   The dynamodb alias.
    */
-  public function __construct($alias = DynamoDb::DYNAMO_DB_DEFAULT) {
+  public function __construct(string $alias = DynamoDb::DYNAMO_DB_DEFAULT) {
     $this->settings = Settings::get('dynamodb_client');
     $this->alias = $alias;
   }
@@ -47,10 +50,10 @@ class ClientFactory {
   /**
    * Return a Client instance for a given alias.
    *
-   * @return \Aws\DynamoDb\DynamoDbClient
+   * @return \Aws\DynamoDb\DynamoDbClient|null
    *   A Client instance for the chosen server.
    */
-  public function connect() {
+  public function connect(): ?DynamoDbClient {
     if (!isset($this->settings[$this->alias])) {
       throw new \InvalidArgumentException((string) (new FormattableMarkup('Nonexistent DynamoDB connection alias: @alias', [
         '@alias' => $this->alias,
@@ -71,7 +74,8 @@ class ClientFactory {
 
       try {
         $this->client[$this->alias] = new DynamoDbClient($connection_info);
-      } catch (DynamoDbException $e) {
+      }
+      catch (DynamoDbException $e) {
         $this->client[$this->alias] = NULL;
       }
 
@@ -85,7 +89,7 @@ class ClientFactory {
    * @return string
    *   Return Drupal instance name string.
    */
-  public function getInstanceId() {
+  public function getInstanceId(): string {
     return $this->alias;
   }
 

@@ -2,7 +2,9 @@
 
 namespace Drupal\dynamodb_client;
 
+use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
+use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Site\Settings;
 
 /**
@@ -17,40 +19,41 @@ class Connection implements DynamoDbInterface {
    *
    * @var \Drupal\dynamodb_client\ClientFactory
    */
-  protected $clientFactory;
+  protected ClientFactory $clientFactory;
 
   /**
    * The DynamoDB connection.
    *
    * @var \Aws\DynamoDb\DynamoDbClient
    */
-  protected $dynamoDb;
+  protected DynamoDbClient $dynamoDb;
 
   /**
    * Drupal DynamoDB instance key.
    *
    * @var string
    */
-  protected $instanceId;
+  protected string $instanceId;
 
   /**
    * The logger channel service.
    *
    * @var \Drupal\Core\Logger\LoggerChannelInterface
    */
-  protected $loggerFactory;
+  protected LoggerChannelInterface $loggerFactory;
 
   /**
    * Static cache for consistent read option.
    *
-   * @var []
+   * @var array
    */
-  protected $consistentRead;
+  protected array $consistentRead;
 
   /**
    * DrupalDynamoDb constructor.
    *
-   * @param $clientFactory
+   * @param \Drupal\dynamodb_client\ClientFactory $clientFactory
+   *   The client factory.
    */
   public function __construct($clientFactory) {
     $this->clientFactory = $clientFactory;
@@ -61,7 +64,7 @@ class Connection implements DynamoDbInterface {
   /**
    * {@inheritdoc}
    */
-  public function query(array $params) {
+  public function query(array $params): array {
     $output = [];
     $limit = isset($params['Limit']);
 
@@ -72,9 +75,9 @@ class Connection implements DynamoDbInterface {
 
     do {
       try {
-
-        // Add the ExclusiveStartKey if we got one back in the previous response
-        if(isset($results['LastEvaluatedKey'])) {
+        // Add the ExclusiveStartKey if we got one back in
+        // the previous response.
+        if (isset($results['LastEvaluatedKey'])) {
           $params['ExclusiveStartKey'] = $results['LastEvaluatedKey'];
         }
 
@@ -83,19 +86,21 @@ class Connection implements DynamoDbInterface {
         if (isset($results['Items'])) {
           if ($limit) {
             $output = $results['Items'];
-          } else {
+          }
+          else {
             $output = array_merge($output, $results['Items']);
           }
         }
 
-      } catch (DynamoDbException $e) {
+      }
+      catch (DynamoDbException $e) {
         $this->logger()->error($e);
       }
 
       // If there is LastEvaluatedKey in the response and initial parameters
       // does not include limit, then there are more items matching this Query.
       // Fetch them all.
-    } while(isset($results['LastEvaluatedKey']) && !$limit);
+    } while (isset($results['LastEvaluatedKey']) && !$limit);
 
     return $output;
   }
@@ -103,7 +108,7 @@ class Connection implements DynamoDbInterface {
   /**
    * {@inheritdoc}
    */
-  public function scan(array $params) {
+  public function scan(array $params): array {
     $output = [];
     $limit = isset($params['Limit']);
 
@@ -114,9 +119,9 @@ class Connection implements DynamoDbInterface {
 
     do {
       try {
-
-        // Add the ExclusiveStartKey if we got one back in the previous response
-        if(isset($results['LastEvaluatedKey'])) {
+        // Add the ExclusiveStartKey if we got one back
+        // in the previous response.
+        if (isset($results['LastEvaluatedKey'])) {
           $params['ExclusiveStartKey'] = $results['LastEvaluatedKey'];
         }
 
@@ -125,19 +130,21 @@ class Connection implements DynamoDbInterface {
         if (isset($results['Items'])) {
           if ($limit) {
             $output = $results['Items'];
-          } else {
+          }
+          else {
             $output = array_merge($output, $results['Items']);
           }
         }
 
-      } catch (DynamoDbException $e) {
+      }
+      catch (DynamoDbException $e) {
         $this->logger()->error($e);
       }
 
       // If there is LastEvaluatedKey in the response and initial parameters
       // does not include limit, then there are more items matching this Query.
       // Fetch them all.
-    } while(isset($results['LastEvaluatedKey']) && !$limit);
+    } while (isset($results['LastEvaluatedKey']) && !$limit);
 
     return $output;
   }
@@ -145,7 +152,7 @@ class Connection implements DynamoDbInterface {
   /**
    * {@inheritdoc}
    */
-  public function getItem(array $params) {
+  public function getItem(array $params): array {
     // Get consistent read settings.
     if (!isset($params['ConsistentRead'])) {
       $params['ConsistentRead'] = $this->isConsistentRead($params['TableName']);
@@ -154,7 +161,8 @@ class Connection implements DynamoDbInterface {
     try {
       $result = $this->dynamoDb->getItem($params);
 
-    } catch (DynamoDbException $e) {
+    }
+    catch (DynamoDbException $e) {
       $this->logger()->error($e);
     }
     return $result['Item'] ?? [];
@@ -163,10 +171,11 @@ class Connection implements DynamoDbInterface {
   /**
    * {@inheritdoc}
    */
-  public function putItem(array $params) {
+  public function putItem(array $params): bool {
     try {
       $result = $this->dynamoDb->putItem($params);
-    } catch (DynamoDbException $e) {
+    }
+    catch (DynamoDbException $e) {
       $this->logger()->error($e);
     }
     return isset($result['@metadata']);
@@ -175,10 +184,11 @@ class Connection implements DynamoDbInterface {
   /**
    * {@inheritdoc}
    */
-  public function updateItem(array $params) {
+  public function updateItem(array $params): array {
     try {
       $result = $this->dynamoDb->updateItem($params);
-    } catch (DynamoDbException $e) {
+    }
+    catch (DynamoDbException $e) {
       $this->logger()->error($e);
     }
     return $result['Attributes'] ?? [];
@@ -187,10 +197,11 @@ class Connection implements DynamoDbInterface {
   /**
    * {@inheritdoc}
    */
-  public function deleteItem(array $params) {
+  public function deleteItem(array $params): array {
     try {
       $result = $this->dynamoDb->deleteItem($params);
-    } catch (DynamoDbException $e) {
+    }
+    catch (DynamoDbException $e) {
       $this->logger()->error($e);
     }
     return $result['Attributes'] ?? [];
@@ -199,10 +210,11 @@ class Connection implements DynamoDbInterface {
   /**
    * {@inheritdoc}
    */
-  public function batchWriteItem(array $params) {
+  public function batchWriteItem(array $params): bool {
     try {
       $result = $this->dynamoDb->batchWriteItem($params);
-    } catch (DynamoDbException $e) {
+    }
+    catch (DynamoDbException $e) {
       $this->logger()->error($e);
     }
     return isset($result['@metadata']);
@@ -211,14 +223,15 @@ class Connection implements DynamoDbInterface {
   /**
    * {@inheritdoc}
    */
-  public function batchGetItem(array $params) {
+  public function batchGetItem(array $params): array {
     // Get consistent read settings.
     if (!isset($params['ConsistentRead'])) {
       $params['ConsistentRead'] = $this->isConsistentRead($params['TableName']);
     }
     try {
       $results = $this->dynamoDb->batchGetItem($params);
-    } catch (DynamoDbException $e) {
+    }
+    catch (DynamoDbException $e) {
       $this->logger()->error($e);
     }
     return $results['Responses'] ?? [];
@@ -227,7 +240,7 @@ class Connection implements DynamoDbInterface {
   /**
    * {@inheritdoc}
    */
-  public function createTable(array $params) {
+  public function createTable(array $params): bool {
     // If there is nothing specified on params, use global defined
     // billing settings.
     if (!isset($params['ProvisionedThroughput'], $params['BillingMode'])) {
@@ -240,11 +253,12 @@ class Connection implements DynamoDbInterface {
         'TableName' => $params['TableName'],
         '@waiter' => [
           'delay'       => 3,
-          'maxAttempts' => 5
-        ]
+          'maxAttempts' => 5,
+        ],
       ]);
 
-    } catch (DynamoDbException $e) {
+    }
+    catch (DynamoDbException $e) {
       $this->logger()->error($e);
       return FALSE;
     }
@@ -254,10 +268,11 @@ class Connection implements DynamoDbInterface {
   /**
    * {@inheritdoc}
    */
-  public function updateTable(array $params) {
+  public function updateTable(array $params): bool {
     try {
       $this->dynamoDb->updateTable($params);
-    } catch (DynamoDbException $e) {
+    }
+    catch (DynamoDbException $e) {
       $this->logger()->error($e);
       return FALSE;
     }
@@ -267,17 +282,18 @@ class Connection implements DynamoDbInterface {
   /**
    * {@inheritdoc}
    */
-  public function deleteTable(array $params) {
+  public function deleteTable(array $params): bool {
     try {
       $this->dynamoDb->deleteTable($params);
       $this->dynamoDb->waitUntil('TableNotExists', [
         'TableName' => $params['TableName'],
         '@waiter' => [
           'delay'       => 3,
-          'maxAttempts' => 5
-        ]
+          'maxAttempts' => 5,
+        ],
       ]);
-    } catch (DynamoDbException $e) {
+    }
+    catch (DynamoDbException $e) {
       $this->logger()->error($e);
       return FALSE;
     }
@@ -287,10 +303,11 @@ class Connection implements DynamoDbInterface {
   /**
    * {@inheritdoc}
    */
-  public function listTables(array $params) {
+  public function listTables(array $params): array {
     try {
       $this->dynamoDb->listTables($params);
-    } catch (DynamoDbException $e) {
+    }
+    catch (DynamoDbException $e) {
       $this->logger()->error($e);
     }
     return $response['TableNames'] ?? [];
@@ -299,7 +316,7 @@ class Connection implements DynamoDbInterface {
   /**
    * {@inheritdoc}
    */
-  public function getClient() {
+  public function getClient(): DynamoDbClient {
     return $this->clientFactory->connect();
   }
 
@@ -312,7 +329,7 @@ class Connection implements DynamoDbInterface {
    * @return bool
    *   Return true or false.
    */
-  protected function isConsistentRead($table) {
+  protected function isConsistentRead(string $table): bool {
     // Reuse for same table and instance - useful for key_value, etc..
     if (!isset($this->consistentRead[$this->instanceId])) {
       $settings = Settings::get('dynamodb_client');
@@ -334,7 +351,7 @@ class Connection implements DynamoDbInterface {
    * @return array
    *   Return billing data.
    */
-  protected function getBillingMode($table) {
+  protected function getBillingMode(string $table): array {
     $settings = Settings::get('dynamodb_client');
 
     if (!isset($settings[$this->instanceId]['aws_billing'])) {
@@ -348,8 +365,9 @@ class Connection implements DynamoDbInterface {
    * Initialize dynamically logger service upon failure of DynamoDB query.
    *
    * @return \Drupal\Core\Logger\LoggerChannelInterface
+   *   The logger.
    */
-  protected function logger() {
+  protected function logger(): LoggerChannelInterface {
     if (!$this->loggerFactory) {
       $this->loggerFactory = \Drupal::service('logger.factory')->get('dynamodb_client');
     }

@@ -2,6 +2,8 @@
 
 namespace Drupal\dynamodb_client;
 
+use Aws\DynamoDb\DynamoDbClient;
+
 /**
  * Main definition for establishing connection.
  *
@@ -22,16 +24,18 @@ final class DynamoDb {
   public const DYNAMO_DB_BATCH_GET_LIMIT = 50;
 
   /**
-   * An nested array of all active connections. It is keyed by database name
-   * and target.
+   * An nested array of all active connections.
+   *
+   * It is keyed by database name and target.
    *
    * @var []\Drupal\dynamodb_client\Connection
    */
   protected static $connections = [];
 
   /**
-   * An nested array of all active connections. It is keyed by database name
-   * and target.
+   * A nested array of all active connections.
+   *
+   * It is keyed by database name and target.
    *
    * @var []\Aws\DynamoDb\DynamoDbClient
    */
@@ -46,7 +50,7 @@ final class DynamoDb {
    * @return \Drupal\dynamodb_client\Connection
    *   Returns Drupal DynamoDB connection
    */
-  public static function database($alias = self::DYNAMO_DB_DEFAULT) {
+  public static function database(string $alias = self::DYNAMO_DB_DEFAULT): Connection {
     if (!isset(self::$connections[$alias])) {
       self::$connections[$alias] = new Connection(new ClientFactory($alias));
     }
@@ -60,10 +64,10 @@ final class DynamoDb {
    * @param string $alias
    *   The database alias from Drupal settings.
    *
-   * @return \Aws\DynamoDb\DynamoDbClient|null
+   * @return \Aws\DynamoDb\DynamoDbClient
    *   Returns AWS DynamoDB connection
    */
-  public static function rawDatabase($alias = self::DYNAMO_DB_DEFAULT) {
+  public static function rawDatabase(string $alias = self::DYNAMO_DB_DEFAULT): DynamoDbClient {
     if (!isset(self::$rawConnections[$alias])) {
       $client_factory = new ClientFactory($alias);
       self::$rawConnections[$alias] = $client_factory->connect();
