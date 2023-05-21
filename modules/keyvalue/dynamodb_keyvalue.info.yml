@@ -1,5 +1,5 @@
 name: 'Amazon DynamoDB Key/Value'
 type: module
 description: 'Amazon DynamoDB Key/Value storage implementation for Drupal 8/9'
-core_version_requirement: ^8.9 || ^9 || ^10
+core_version_requirement: ^9 || ^10
 package: Performance
