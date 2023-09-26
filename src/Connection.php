@@ -5,6 +5,7 @@ namespace Drupal\dynamodb_client;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
 use Drupal\Core\Logger\LoggerChannelInterface;
+use Drupal\Core\Logger\LoggerChannelTrait;
 use Drupal\Core\Site\Settings;
 
 /**
@@ -13,6 +14,8 @@ use Drupal\Core\Site\Settings;
  * @package Drupal\dynamodb_client
  */
 class Connection implements DynamoDbInterface {
+
+  use LoggerChannelTrait;
 
   /**
    * The DynamoDB client factory.
@@ -40,7 +43,7 @@ class Connection implements DynamoDbInterface {
    *
    * @var \Drupal\Core\Logger\LoggerChannelInterface
    */
-  protected LoggerChannelInterface $loggerFactory;
+  protected $loggerChannel;
 
   /**
    * Static cache for consistent read option.
@@ -305,7 +308,7 @@ class Connection implements DynamoDbInterface {
    */
   public function listTables(array $params): array {
     try {
-      $this->dynamoDb->listTables($params);
+      $response = $this->dynamoDb->listTables($params);
     }
     catch (DynamoDbException $e) {
       $this->logger()->error($e);
@@ -368,10 +371,10 @@ class Connection implements DynamoDbInterface {
    *   The logger.
    */
   protected function logger(): LoggerChannelInterface {
-    if (!$this->loggerFactory) {
-      $this->loggerFactory = \Drupal::service('logger.factory')->get('dynamodb_client');
+    if (!$this->loggerChannel) {
+      $this->loggerChannel = $this->getLogger('dynamodb_client');
     }
-    return $this->loggerFactory;
+    return $this->loggerChannel;
   }
 
 }
