@@ -28,18 +28,18 @@ final class DynamoDb {
    *
    * It is keyed by database name and target.
    *
-   * @var []\Drupal\dynamodb_client\Connection
+   * @var \Drupal\dynamodb_client\Connection[]
    */
-  protected static $connections = [];
+  protected static array $connections = [];
 
   /**
    * A nested array of all active connections.
    *
    * It is keyed by database name and target.
    *
-   * @var []\Aws\DynamoDb\DynamoDbClient
+   * @var \Aws\DynamoDb\DynamoDbClient[]
    */
-  protected static $rawConnections = [];
+  protected static array $rawConnections = [];
 
   /**
    * Drupal wrapper with only specifics method available for DynamoDB.

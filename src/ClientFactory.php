@@ -16,7 +16,7 @@ class ClientFactory {
   /**
    * The 'dynamodb' client settings.
    *
-   * @var string[]
+   * @var array
    *   Array of site settings.
    */
   protected array $settings;
@@ -31,10 +31,10 @@ class ClientFactory {
   /**
    * The DynamoDB client.
    *
-   * @var \Aws\DynamoDb\DynamoDbClient
+   * @var \Aws\DynamoDb\DynamoDbClient[]
    *   The DynamoDb client instance.
    */
-  protected DynamoDbClient $client;
+  protected array $client;
 
   /**
    * Constructor.
@@ -63,9 +63,9 @@ class ClientFactory {
       $settings = $this->settings[$this->alias];
 
       $connection_info = [
-        'endpoint'   => $settings['endpoint'],
-        'region'   => $settings['region'],
-        'version'  => $settings['version'] ?? 'latest',
+        'endpoint' => $settings['endpoint'],
+        'region' => $settings['region'],
+        'version' => $settings['version'] ?? 'latest',
       ];
 
       if (isset($settings['aws_access_key'], $settings['aws_secret_key'])) {
