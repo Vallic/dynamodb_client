@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Contains module overrides.
+ */
+
 use Drupal\dynamodb_client\DynamoDb;
 
 /**
@@ -7,7 +12,7 @@ use Drupal\dynamodb_client\DynamoDb;
  */
 function dynamodb_keyvalue_install() {
   $connection = DynamoDb::database();
-  foreach (dynamodb_keyvalue_tables_definition() as $id => $table) {;
+  foreach (dynamodb_keyvalue_tables_definition() as $id => $table) {
     $connection->createTable($table);
   }
 
@@ -33,78 +38,80 @@ function dynamodb_keyvalue_uninstall() {
  */
 function dynamodb_keyvalue_tables_definition() {
   return [
-   'key_value' => [
-     'TableName' => 'key_value',
-     'AttributeDefinitions' => [
-       [
-         'AttributeName' => 'collection',
-         'AttributeType' => 'S'
-       ],
-       [
-         'AttributeName' => 'name',
-         'AttributeType' => 'S'
-       ],
-     ],
-     'KeySchema' => [
-       [
-         'AttributeName' => 'collection',
-         'KeyType' => 'HASH'  //Partition key
-       ],
-       [
-         'AttributeName' => 'name',
-         'KeyType' => 'RANGE'  //Sort key
-       ],
-     ],
-   ],
-   'key_value_expire' => [
-     'TableName' => 'key_value_expire',
-     'AttributeDefinitions' => [
-       [
-         'AttributeName' => 'collection',
-         'AttributeType' => 'S',
-       ],
-       [
-         'AttributeName' => 'name',
-         'AttributeType' => 'S',
-       ],
-       [
-         'AttributeName' => 'expire',
-         'AttributeType' => 'N',
-       ],
-     ],
-     'LocalSecondaryIndexes' => [
-       [
-         'IndexName' => 'expired_index',
-         'KeySchema' => [
-           [
-             'AttributeName' => 'collection',
-             'KeyType' => 'HASH'
-           ],
-           [
-             'AttributeName' => 'expire',
-             'KeyType' => 'RANGE'
-           ],
-         ],
-         'Projection' => [
-           'ProjectionType' => 'INCLUDE',
-           'NonKeyAttributes' => ['name']
-         ]
-       ],
-     ],
-     'KeySchema' => [
-       [
-         'AttributeName' => 'collection',
-         'KeyType' => 'HASH'
-       ],
-       [
-         'AttributeName' => 'name',
-         'KeyType' => 'RANGE'
-       ],
-     ],
-     'TimeToLiveSpecification' => [
-       'Enabled' => TRUE,
-       'AttributeName' => 'expire',
-     ],
-   ]
+    'key_value' => [
+      'TableName' => 'key_value',
+      'AttributeDefinitions' => [
+        [
+          'AttributeName' => 'collection',
+          'AttributeType' => 'S',
+        ],
+        [
+          'AttributeName' => 'name',
+          'AttributeType' => 'S',
+        ],
+      ],
+      'KeySchema' => [
+        [
+          'AttributeName' => 'collection',
+          'KeyType' => 'HASH',
+            // Partition key.
+        ],
+        [
+          'AttributeName' => 'name',
+          'KeyType' => 'RANGE',
+            // Sort key.
+        ],
+      ],
+    ],
+    'key_value_expire' => [
+      'TableName' => 'key_value_expire',
+      'AttributeDefinitions' => [
+        [
+          'AttributeName' => 'collection',
+          'AttributeType' => 'S',
+        ],
+        [
+          'AttributeName' => 'name',
+          'AttributeType' => 'S',
+        ],
+        [
+          'AttributeName' => 'expire',
+          'AttributeType' => 'N',
+        ],
+      ],
+      'LocalSecondaryIndexes' => [
+        [
+          'IndexName' => 'expired_index',
+          'KeySchema' => [
+            [
+              'AttributeName' => 'collection',
+              'KeyType' => 'HASH',
+            ],
+            [
+              'AttributeName' => 'expire',
+              'KeyType' => 'RANGE',
+            ],
+          ],
+          'Projection' => [
+            'ProjectionType' => 'INCLUDE',
+            'NonKeyAttributes' => ['name'],
+          ],
+        ],
+      ],
+      'KeySchema' => [
+        [
+          'AttributeName' => 'collection',
+          'KeyType' => 'HASH',
+        ],
+        [
+          'AttributeName' => 'name',
+          'KeyType' => 'RANGE',
+        ],
+      ],
+      'TimeToLiveSpecification' => [
+        'Enabled' => TRUE,
+        'AttributeName' => 'expire',
+      ],
+    ],
   ];
 }

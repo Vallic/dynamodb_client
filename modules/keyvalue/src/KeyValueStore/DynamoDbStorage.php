@@ -53,10 +53,10 @@ class DynamoDbStorage extends StorageBase {
    *   The serialization class to use.
    * @param \Drupal\dynamodb_client\Connection $dynamodb
    *   The DynamoDB connection.
-   * @param string $table
-   *   The name of the SQL table to use, defaults to key_value.
    * @param \Aws\DynamoDb\Marshaler $marshaler
    *   The marshals and unmarshals AWS service for PHP array and JSON.
+   * @param string $table
+   *   The name of the SQL table to use, defaults to key_value.
    */
   public function __construct($collection, SerializationInterface $serializer, Connection $dynamodb, Marshaler $marshaler, $table = 'key_value') {
     parent::__construct($collection);
@@ -119,9 +119,9 @@ class DynamoDbStorage extends StorageBase {
         $data = [];
         foreach ($items as $id => $key) {
           $data['Keys'][] = [
-              'collection' => ['S' => $this->collection],
-              'name' => ['S' => $key],
-            ];
+            'collection' => ['S' => $this->collection],
+            'name' => ['S' => $key],
+          ];
         }
 
         $params = [

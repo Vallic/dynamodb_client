@@ -16,6 +16,7 @@ class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreE
 
   /**
    * The current time.
+   *
    * @var \Drupal\Component\Datetime\TimeInterface|string
    */
   protected $time;
@@ -54,7 +55,7 @@ class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreE
       ],
       'Limit' => 1,
       'ProjectionExpression' => '#vl',
-      'FilterExpression' => 'expire > :exp'
+      'FilterExpression' => 'expire > :exp',
     ];
 
     $results = $this->dynamodb->query($params);
@@ -84,7 +85,6 @@ class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreE
     // FilterExpression
     // And we can't use batchGetItem, and scan could be maybe overkill.
     // Make basic single get request.
-
     foreach ($keys as $key) {
       if ($value = $this->get($key)) {
         $values[$key] = $value;
@@ -167,7 +167,7 @@ class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreE
         'collection' => ['S' => $this->collection],
         'name' => ['S' => $key],
         'value' => ['S' => $this->serializer->encode($value)],
-        'expire'=> ['N' => $this->time->getRequestTime() + $expire]
+        'expire' => ['N' => $this->time->getRequestTime() + $expire],
       ],
       'ExpressionAttributeNames' => [
         '#vl' => 'value',
@@ -193,7 +193,7 @@ class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreE
               'collection' => ['S' => $this->collection],
               'name' => ['S' => $key],
               'value' => ['S' => $this->serializer->encode($value)],
-              'expire' => ['N' => $this->time->getRequestTime() + $expire]
+              'expire' => ['N' => $this->time->getRequestTime() + $expire],
             ],
           ],
         ];
@@ -207,13 +207,6 @@ class DynamoDbStorageExpirable extends DynamoDbStorage implements KeyValueStoreE
 
       $this->dynamodb->batchWriteItem($params);
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function deleteMultiple(array $keys) {
-    parent::deleteMultiple($keys);
   }
 
 }
